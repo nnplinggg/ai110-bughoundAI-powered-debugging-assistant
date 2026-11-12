@@ -187,16 +187,36 @@ class BugHoundAgent:
 
         return None
 
-    def _normalize_issues(self, arr: List[Any]) -> List[Dict[str, str]]:
+    def _normalize_issues(self, arr: List[Any]) -> Optional[List[Dict[str, str]]]:
+        # An empty array is the valid, explicit "no issues" response.
+        if not arr:
+            return []
+
         issues: List[Dict[str, str]] = []
         for item in arr:
             if not isinstance(item, dict):
-                continue
+                return None
+
+            issue_type = item.get("type")
+            severity = item.get("severity")
+            message = item.get("msg")
+
+            # Reject incomplete or out-of-contract issues instead of inventing
+            # defaults that could affect the fix and risk decisions.
+            if (
+                not isinstance(issue_type, str)
+                or not issue_type.strip()
+                or severity not in {"Low", "Medium", "High"}
+                or not isinstance(message, str)
+                or not message.strip()
+            ):
+                return None
+
             issues.append(
                 {
-                    "type": str(item.get("type", "Issue")),
-                    "severity": str(item.get("severity", "Unknown")),
-                    "msg": str(item.get("msg", "")).strip(),
+                    "type": issue_type.strip(),
+                    "severity": severity,
+                    "msg": message.strip(),
                 }
             )
         return issues

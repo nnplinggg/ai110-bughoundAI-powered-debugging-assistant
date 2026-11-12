@@ -47,3 +47,27 @@ def test_mock_client_forces_llm_fallback_to_heuristics_for_analysis():
     assert any(issue.get("type") == "Code Quality" for issue in result["issues"])
     # Ensure we logged the fallback path
     assert any("Falling back to heuristics" in entry.get("message", "") for entry in result["logs"])
+
+
+class FixedAnalysisClient:
+    def __init__(self, response):
+        self.response = response
+
+    def complete(self, system_prompt, user_prompt):
+        return self.response
+
+
+def test_invalid_issue_shape_falls_back_to_heuristics():
+    # Missing required fields must not become fabricated defaults.
+    agent = BugHoundAgent(client=FixedAnalysisClient('[{"severity": "High"}]'))
+    result = agent.run("def f():\n    print('hi')\n")
+
+    assert any(issue.get("type") == "Code Quality" for issue in result["issues"])
+    assert any("not parseable JSON" in entry.get("message", "") for entry in result["logs"])
+
+
+def test_valid_empty_issue_array_is_accepted():
+    agent = BugHoundAgent(client=FixedAnalysisClient("[]"))
+    result = agent.run("def f():\n    return True\n")
+
+    assert result["issues"] == []

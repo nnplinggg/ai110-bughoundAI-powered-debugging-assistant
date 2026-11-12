@@ -80,7 +80,10 @@ def assess_risk(
     # ----------------------------
     # Auto-fix policy
     # ----------------------------
-    should_autofix = level == "low"
+    # Auto-fix only when the proposed change has no flagged issue or
+    # structural caution. A low label alone can still hide a meaningful
+    # behavior change, so anything below a perfect score goes to review.
+    should_autofix = level == "low" and score == 100
 
     if not reasons:
         reasons.append("No significant risks detected.")

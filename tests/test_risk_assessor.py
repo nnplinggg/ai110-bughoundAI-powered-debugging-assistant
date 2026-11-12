@@ -22,6 +22,7 @@ def test_low_risk_when_minimal_change_and_low_severity():
     )
     assert risk["level"] in ("low", "medium")  # depends on scoring rules
     assert 0 <= risk["score"] <= 100
+    assert risk["should_autofix"] is False
 
 
 def test_high_severity_issue_drives_score_down():
