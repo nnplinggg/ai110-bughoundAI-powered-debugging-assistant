@@ -47,3 +47,13 @@ def test_missing_return_is_penalized():
     )
     assert risk["score"] < 100
     assert any("Return" in r or "return" in r for r in risk["reasons"])
+
+
+def test_comments_only_input_is_not_auto_fixed():
+    code = "# notes only\n# no executable code\n"
+    risk = assess_risk(original_code=code, fixed_code=code, issues=[])
+
+    assert risk["level"] == "medium"
+    assert risk["score"] == 70
+    assert risk["should_autofix"] is False
+    assert any("no executable code" in r.lower() for r in risk["reasons"])

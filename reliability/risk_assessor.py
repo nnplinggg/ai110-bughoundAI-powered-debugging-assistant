@@ -30,6 +30,16 @@ def assess_risk(
     original_lines = original_code.strip().splitlines()
     fixed_lines = fixed_code.strip().splitlines()
 
+    # A comments-only snippet has nothing executable to repair. Treating the
+    # unchanged text as a perfect fix would create unsafe confidence in the UI.
+    has_executable_content = any(
+        line.strip() and not line.lstrip().startswith("#")
+        for line in original_lines
+    )
+    if not has_executable_content:
+        score -= 30
+        reasons.append("Input contains no executable code.")
+
     # ----------------------------
     # Issue severity based risk
     # ----------------------------
